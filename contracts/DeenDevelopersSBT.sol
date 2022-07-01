@@ -2,29 +2,29 @@
 
 pragma solidity ^0.8.4;
 
-import "@rari-capital/solmate/src/tokens/ERC721.sol";
-import "@rari-capital/solmate/src/auth/Owned.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-// TODO: make contract upgradable
-// TODO: see if you save gas by not using Counters library
-// TODO: write tests and test on testnet
-contract DeenDevelopersSBT is ERC721, Owned, Pausable {
+// TODO: write tests and test on testnet and test upgradable (mint, burnMyToken, burn, pausable, transfer)
+contract DeenDevelopersSBT is
+    Initializable,
+    ERC721URIStorageUpgradeable,
+    OwnableUpgradeable,
+    PausableUpgradeable
+{
     error CannotTransferSBT();
 
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIdCounter;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    CountersUpgradeable.Counter private _tokenIdCounter;
     mapping(uint256 => string) private _tokenURIs;
 
-    constructor()
-        ERC721("Deen Developers Hackathon", "DDH")
-        Owned(msg.sender)
-    {}
-
-    function tokenURI(uint256 id) public view override returns (string memory) {
-        ownerOf(id);
-        return _tokenURIs[id];
+    function initialize() external initializer {
+        __ERC721_init("Deen Developers Hackathon", "DDH");
+        __Ownable_init();
+        __Pausable_init();
     }
 
     function safeMint(address to, string memory uri) external onlyOwner {
@@ -51,11 +51,11 @@ contract DeenDevelopersSBT is ERC721, Owned, Pausable {
         _unpause();
     }
 
-    function transferFrom(
+    function _transfer(
         address,
         address,
         uint256
-    ) public pure override {
+    ) internal pure override {
         revert CannotTransferSBT();
     }
 }
