@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-// TODO: write tests and test on testnet and test upgradable (mint, burnMyToken, burn, pausable, transfer)
 contract DeenDevelopersSBT is
     Initializable,
     ERC721URIStorageUpgradeable,
