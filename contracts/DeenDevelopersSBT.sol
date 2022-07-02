@@ -31,7 +31,7 @@ contract DeenDevelopersSBT is
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _tokenURIs[tokenId] = uri;
+        _setTokenURI(tokenId, uri);
     }
 
     function burn(uint256 tokenId) public onlyOwner {
@@ -39,7 +39,10 @@ contract DeenDevelopersSBT is
     }
 
     function burnMyToken(uint256 tokenId) public whenNotPaused {
-        require(msg.sender == ownerOf(tokenId), "Unauthorized: Not your token");
+        require(
+            msg.sender == ownerOf(tokenId),
+            "Unauthorized: caller is not token owner"
+        );
         _burn(tokenId);
     }
 

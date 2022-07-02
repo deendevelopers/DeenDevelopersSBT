@@ -10,12 +10,12 @@ module.exports = {
     currency: 'ETH',
     enabled: (process.env.REPORT_GAS) ? true : false
   },
-  networks: {
-    ropsten: {
-      url: `asdf${process.env.API_KEY}`,
-      accounts: [process.env.PRI_KEY]
-    }
-  },
+  // networks: {
+  //   ropsten: {
+  //     url: `asdf${process.env.API_KEY}`,
+  //     accounts: [process.env.PRI_KEY]
+  //   }
+  // },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY
   }
