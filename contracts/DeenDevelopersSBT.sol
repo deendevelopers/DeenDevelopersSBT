@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-// TODO: write tests and test on testnet and test upgradable (mint, burnMyToken, burn, pausable, transfer)
 contract DeenDevelopersSBT is
     Initializable,
     ERC721URIStorageUpgradeable,
@@ -31,7 +30,7 @@ contract DeenDevelopersSBT is
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _tokenURIs[tokenId] = uri;
+        _setTokenURI(tokenId, uri);
     }
 
     function burn(uint256 tokenId) public onlyOwner {
@@ -39,7 +38,10 @@ contract DeenDevelopersSBT is
     }
 
     function burnMyToken(uint256 tokenId) public whenNotPaused {
-        require(msg.sender == ownerOf(tokenId), "Unauthorized: Not your token");
+        require(
+            msg.sender == ownerOf(tokenId),
+            "Unauthorized: caller is not token owner"
+        );
         _burn(tokenId);
     }
 

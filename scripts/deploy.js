@@ -2,7 +2,7 @@ const { ethers, upgrades } = require("hardhat");
 
 async function main() {
   const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-  const contract = await upgrades.deployProxy(DeenDevelopersSBT, [42], {
+  const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
     initializer: "initialize",
   });
 
