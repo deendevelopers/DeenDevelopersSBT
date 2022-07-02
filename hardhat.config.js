@@ -3,6 +3,7 @@ require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 require("hardhat-gas-reporter");
+require('dotenv').config()
 
 module.exports = {
   solidity: "0.8.10",
@@ -18,5 +19,13 @@ module.exports = {
   // },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY
+  },
+  gasReporter: {
+    enabled: true,
+    currency: "ETH",
+    gasPrice: 80,
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+    // outputFile: "gas-report.txt",
+    // noColors: true
   }
 };
