@@ -15,6 +15,7 @@ contract DeenDevelopersSBT is
     PausableUpgradeable
 {
     error CannotTransferSBT();
+    error CannotApproveSBT();
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIdCounter;
@@ -59,5 +60,13 @@ contract DeenDevelopersSBT is
         uint256
     ) internal pure override {
         revert CannotTransferSBT();
+    }
+
+    function approve(address, uint256) public pure override {
+        revert CannotApproveSBT();
+    }
+
+    function setApprovalForAll(address, bool) public pure override {
+        revert CannotApproveSBT();
     }
 }

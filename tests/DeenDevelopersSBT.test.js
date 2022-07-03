@@ -300,4 +300,25 @@ describe("DeenDevelopersSBT", function () {
     await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
     await expect(contract.ownerOf(0)).to.eventually.be.equal(wallet1.address);
   });
+  it("Should not be able to approve", async function () {
+    const [owner, wallet1, wallet2] = await ethers.getSigners()
+
+    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
+    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
+      initializer: "initialize",
+    });
+
+    await contract.deployed();
+
+    await contract.safeMint(wallet1.address, 'ipfs://someuri');
+
+    await expect(contract.balanceOf(wallet1.address)).to.eventually.be.equal(1);
+    await expect(contract.connect(wallet1).approve(wallet2.address, 0)).to.eventually.be.rejectedWith('CannotApproveSBT()');
+    await expect(contract.connect(wallet1).setApprovalForAll(wallet2.address, true)).to.eventually.be.rejectedWith('CannotApproveSBT()');
+
+    await expect(contract.balanceOf(wallet1.address)).to.eventually.be.equal(1);
+
+    await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
+    await expect(contract.ownerOf(0)).to.eventually.be.equal(wallet1.address);
+  });
 });
