@@ -12,5 +12,3 @@ async function main() {
 }
 
 main();
-
-//env $(cat .env) npx hardhat run --network ropsten scripts/deploy.js
