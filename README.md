@@ -1,3 +1,3 @@
 # Deen Developers Soul Bound Tokens
 
-![example hackathon NFT](https://bafybeig264pr2lq2vz6mb5wwxcw2tj2iolniplyl7mpkp3glrrc7j5ykyu.ipfs.cf-ipfs.com/)
+![example hackathon NFT](https://bafybeifh7yajj4fpgspbnna2jvzen7j4cbhyrwm4hsvqu5eikpwb6metzu.ipfs.cf-ipfs.com/thumbnail.gif)
