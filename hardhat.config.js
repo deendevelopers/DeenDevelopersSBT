@@ -11,14 +11,18 @@ module.exports = {
     currency: 'ETH',
     enabled: (process.env.REPORT_GAS) ? true : false
   },
-  // networks: {
-  //   ropsten: {
-  //     url: `asdf${process.env.API_KEY}`,
-  //     accounts: [process.env.PRI_KEY]
-  //   }
-  // },
+  networks: {
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.MUMBAI_ALCH_API_KEY}`,
+      accounts: [`${process.env.ETH_ACC_PRIV_KEY}`]
+    },
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.RINKEBY_ALCH_API_KEY}`,
+      accounts: [`${process.env.ETH_ACC_PRIV_KEY}`]
+    }
+  },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
+    apiKey: process.env.POLYGONSCAN_API_KEY
   },
   gasReporter: {
     enabled: true,
