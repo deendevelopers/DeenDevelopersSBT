@@ -9,16 +9,22 @@ const expect = chai.expect;
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+const deployContract = async () => {
+  const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
+  const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
+    kind: 'uups',
+    initializer: "initialize",
+  });
+
+  await contract.deployed();
+  return contract
+}
+
+
 describe("DeenDevelopersSBT", function () {
   it("Should set the owner for the proxy contract to deployer and implementation contract is 0x0..", async function () {
     const [owner] = await ethers.getSigners()
-
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
+    const contract = await deployContract();
 
     const proxyAddress = contract.address;
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
@@ -32,15 +38,9 @@ describe("DeenDevelopersSBT", function () {
     expect(implementationOwner).to.be.equal(NULL_ADDRESS);
   });
 
-  it("Should be upgradable", async function () {
+  it("Should be upgradable by owner", async function () {
     const [owner] = await ethers.getSigners()
-
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
+    const contract = await deployContract();
 
     const proxyAddress = contract.address;
     const implementationAddressV1 = await upgrades.erc1967.getImplementationAddress(proxyAddress);
@@ -65,11 +65,32 @@ describe("DeenDevelopersSBT", function () {
     await expect(contractV2.newFunction()).to.eventually.be.equal('this is a new function');
   });
 
+  it("Should not be upgradable by none owner", async function () {
+    const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
+
+    const proxyAddress = contract.address;
+    const implementationAddressV1 = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+
+    await expect(contract.burnMyToken(4)).to.eventually.be.rejectedWith('ERC721: invalid token ID');
+
+    const TestUpgradable = await ethers.getContractFactory("TestUpgradable");
+
+    await expect(
+      upgrades.upgradeProxy(proxyAddress, await TestUpgradable.connect(wallet1))
+    ).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
+    const afterImplementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+
+
+    expect(proxyAddress).to.be.properAddress;
+    expect(implementationAddressV1).to.be.properAddress;
+    expect(afterImplementationAddress).to.be.properAddress;
+    expect(implementationAddressV1).to.equal(afterImplementationAddress);
+
+    await expect(contract.burnMyToken(4)).to.eventually.be.rejectedWith('ERC721: invalid token ID');
+  });
   it("Should have contract name and symbol when deployed", async function () {
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
+    const contract = await deployContract();
 
     expect(await contract.name()).to.be.equal('Deen Developers Hackathon');
     expect(await contract.symbol()).to.be.equal('DDH');
@@ -77,13 +98,7 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should sucessfully mint when safemint called by owner", async function () {
     const [owner, wallet1, wallet2] = await ethers.getSigners()
-
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
+    const contract = await deployContract();
 
     await expect(contract.safeMint(wallet1.address, 'ipfs://someuri'))
       .to.emit(contract, 'Transfer')
@@ -113,25 +128,15 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should failure to mint when safemint called by non owner", async function () {
     const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
     await expect(contract.connect(wallet1).safeMint(wallet1.address, 'ipfs://someuri')).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
   });
 
   it("Should burn token by tokenid when burn is called by owner", async function () {
     const [owner, wallet1, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
     await contract.safeMint(wallet1.address, 'ipfs://someotheruri');
     await contract.safeMint(wallet2.address, 'ipfs://anotheruri');
@@ -156,13 +161,8 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should not burn token when burn is called by non owner", async function () {
     const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
 
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
     await contract.safeMint(wallet1.address, 'ipfs://someotheruri');
@@ -183,13 +183,8 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should burn token when burnMyToken is called and id is passed", async function () {
     const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
     await contract.safeMint(wallet1.address, 'ipfs://someotheruri');
 
@@ -210,13 +205,8 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should not burn token when burnMyToken by wallet that doesn't own the token", async function () {
     const [owner, wallet1, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
 
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
     await contract.safeMint(wallet1.address, 'ipfs://someotheruri');
@@ -237,13 +227,8 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should not burn token when pauseBurnMyToken but able to when unpauseBurnMyToken", async function () {
     const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
     await contract.safeMint(wallet1.address, 'ipfs://someotheruri');
 
@@ -267,26 +252,15 @@ describe("DeenDevelopersSBT", function () {
 
   it("Should not pauseBurnMyToken or unpauseBurnMyToken if not owner", async function () {
     const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
 
     await expect(contract.connect(wallet1).pauseBurnMyToken()).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
     await expect(contract.connect(wallet1).unpauseBurnMyToken()).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
   });
   it("Should not be able to transfer", async function () {
     const [owner, wallet1, wallet2] = await ethers.getSigners()
-
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
+    const contract = await deployContract();
 
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
 
@@ -302,13 +276,8 @@ describe("DeenDevelopersSBT", function () {
   });
   it("Should not be able to approve", async function () {
     const [owner, wallet1, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
 
-    const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
-    const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
-      initializer: "initialize",
-    });
-
-    await contract.deployed();
 
     await contract.safeMint(wallet1.address, 'ipfs://someuri');
 

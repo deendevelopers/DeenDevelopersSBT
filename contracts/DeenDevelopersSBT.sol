@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -11,6 +12,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract DeenDevelopersSBT is
     Initializable,
     ERC721URIStorageUpgradeable,
+    UUPSUpgradeable,
     OwnableUpgradeable,
     PausableUpgradeable
 {
@@ -26,6 +28,12 @@ contract DeenDevelopersSBT is
         __Ownable_init();
         __Pausable_init();
     }
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyOwner
+    {}
 
     function safeMint(address to, string memory uri) external onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
