@@ -8,7 +8,8 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
-
+const DEFAULT_ADMIN_ROLE = ethers.utils.formatBytes32String("");
+const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
 const deployContract = async () => {
   const DeenDevelopersSBT = await ethers.getContractFactory("DeenDevelopersSBT");
   const contract = await upgrades.deployProxy(DeenDevelopersSBT, [], {
@@ -28,17 +29,22 @@ describe("DeenDevelopersSBT", function () {
 
     const proxyAddress = contract.address;
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
-    const proxyOwner = await contract.owner();
+    const hasAdminRole = await contract.hasRole(DEFAULT_ADMIN_ROLE, owner.address);
+    const hasMinterRole = await contract.hasRole(MINTER_ROLE, owner.address);
     const implementationContract = await ethers.getContractAt("DeenDevelopersSBT", implementationAddress);
-    const implementationOwner = await implementationContract.owner();
+    const implementationHasAdminRole = await implementationContract.hasRole(DEFAULT_ADMIN_ROLE, owner.address);
+    const implementationHasMinterRole = await implementationContract.hasRole(MINTER_ROLE, owner.address);
+
 
     expect(proxyAddress).to.not.be.null;
     expect(implementationAddress).to.not.be.null;
-    expect(proxyOwner).to.be.equal(owner.address);
-    expect(implementationOwner).to.be.equal(NULL_ADDRESS);
+    expect(hasAdminRole).to.be.true;
+    expect(hasMinterRole).to.be.true;
+    expect(implementationHasAdminRole).to.be.false;
+    expect(implementationHasMinterRole).to.be.false;
   });
 
-  it("Should be upgradable by owner", async function () {
+  it("Should be upgradable by Admin", async function () {
     const [owner] = await ethers.getSigners()
     const contract = await deployContract();
 
@@ -65,7 +71,7 @@ describe("DeenDevelopersSBT", function () {
     await expect(contractV2.newFunction()).to.eventually.be.equal('this is a new function');
   });
 
-  it("Should not be upgradable by none owner", async function () {
+  it("Should not be upgradable by none Admins", async function () {
     const [owner, wallet1] = await ethers.getSigners()
     const contract = await deployContract();
 
@@ -78,7 +84,7 @@ describe("DeenDevelopersSBT", function () {
 
     await expect(
       upgrades.upgradeProxy(proxyAddress, await TestUpgradable.connect(wallet1))
-    ).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
+    ).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE.toString()}`);
     const afterImplementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
 
 
@@ -89,6 +95,7 @@ describe("DeenDevelopersSBT", function () {
 
     await expect(contract.burnMyToken(4)).to.eventually.be.rejectedWith('ERC721: invalid token ID');
   });
+
   it("Should have contract name and symbol when deployed", async function () {
     const contract = await deployContract();
 
@@ -130,7 +137,7 @@ describe("DeenDevelopersSBT", function () {
     const [owner, wallet1] = await ethers.getSigners()
     const contract = await deployContract();
 
-    await expect(contract.connect(wallet1).safeMint(wallet1.address, 'ipfs://someuri')).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
+    await expect(contract.connect(wallet1).safeMint(wallet1.address, 'ipfs://someuri')).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${MINTER_ROLE}`);
   });
 
   it("Should burn token by tokenid when burn is called by owner", async function () {
@@ -170,7 +177,7 @@ describe("DeenDevelopersSBT", function () {
     await expect(contract.balanceOf(wallet1.address)).to.eventually.be.equal(2);
     await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
 
-    await expect(contract.connect(wallet1).burn(0)).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
+    await expect(contract.connect(wallet1).burn(0)).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
 
     await expect(contract.balanceOf(wallet1.address)).to.eventually.be.equal(2);
 
@@ -214,7 +221,7 @@ describe("DeenDevelopersSBT", function () {
     await expect(contract.balanceOf(wallet1.address)).to.eventually.be.equal(2);
     await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
 
-    await expect(contract.connect(wallet2).burn(0)).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
+    await expect(contract.connect(wallet2).burn(0)).to.eventually.be.rejectedWith(`AccessControl: account ${wallet2.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
 
     await expect(contract.balanceOf(wallet1.address)).to.eventually.be.equal(2);
 
@@ -255,8 +262,8 @@ describe("DeenDevelopersSBT", function () {
     const contract = await deployContract();
 
 
-    await expect(contract.connect(wallet1).pauseBurnMyToken()).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
-    await expect(contract.connect(wallet1).unpauseBurnMyToken()).to.eventually.be.rejectedWith('Ownable: caller is not the owner');
+    await expect(contract.connect(wallet1).pauseBurnMyToken()).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+    await expect(contract.connect(wallet1).unpauseBurnMyToken()).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
   });
   it("Should not be able to transfer", async function () {
     const [owner, wallet1, wallet2] = await ethers.getSigners()
@@ -289,5 +296,60 @@ describe("DeenDevelopersSBT", function () {
 
     await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
     await expect(contract.ownerOf(0)).to.eventually.be.equal(wallet1.address);
+  });
+  it("only admin can grant or revoke roles", async function () {
+    const [owner, wallet1, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
+    await expect(contract.connect(wallet1).grantRole(DEFAULT_ADMIN_ROLE, wallet2.address)).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+    await expect(contract.connect(wallet1).grantRole(MINTER_ROLE, wallet2.address)).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+    await expect(contract.connect(wallet1).revokeRole(DEFAULT_ADMIN_ROLE, wallet2.address)).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+    await expect(contract.connect(wallet1).revokeRole(MINTER_ROLE, wallet2.address)).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+  });
+  it("Minter should only be able to mint tokens, not burn, pause or upgrade", async function () {
+    const [owner, minter, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
+    await expect(contract.grantRole(MINTER_ROLE, minter.address))
+      .to.emit(contract, 'RoleGranted')
+      .withArgs(MINTER_ROLE, minter.address, owner.address);
+    await expect(contract.connect(minter).safeMint(wallet2.address, 'ipfs://someuri'))
+      .to.emit(contract, 'Transfer')
+      .withArgs(NULL_ADDRESS, wallet2.address, 0);
+    await expect(contract.connect(minter).burn(0)).to.eventually.be.rejectedWith(`AccessControl: account ${minter.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+    await expect(contract.connect(minter).pauseBurnMyToken()).to.eventually.be.rejectedWith(`AccessControl: account ${minter.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+    await expect(contract.connect(minter).unpauseBurnMyToken()).to.eventually.be.rejectedWith(`AccessControl: account ${minter.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+
+    const TestUpgradable = await ethers.getContractFactory("TestUpgradable");
+
+    await expect(
+      upgrades.upgradeProxy(contract.address, await TestUpgradable.connect(minter))
+    ).to.eventually.be.rejectedWith(`AccessControl: account ${minter.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE.toString()}`);
+  });
+  it("admin should be able to revoke minter role", async function () {
+    const [owner, minter, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
+    await expect(contract.grantRole(MINTER_ROLE, minter.address))
+      .to.emit(contract, 'RoleGranted')
+      .withArgs(MINTER_ROLE, minter.address, owner.address);
+    await expect(contract.connect(minter).safeMint(wallet2.address, 'ipfs://someuri'))
+      .to.emit(contract, 'Transfer')
+      .withArgs(NULL_ADDRESS, wallet2.address, 0);
+    await expect(contract.revokeRole(MINTER_ROLE, minter.address))
+      .to.emit(contract, 'RoleRevoked')
+      .withArgs(MINTER_ROLE, minter.address, owner.address);
+    await expect(contract.connect(minter).safeMint(wallet2.address, 'ipfs://someuri')).to.eventually.be.rejectedWith(`AccessControl: account ${minter.address.toLowerCase()} is missing role ${MINTER_ROLE}`);
+  });
+  it("admin should be able to grant and revoke admin role", async function () {
+    const [owner, admin2, wallet2] = await ethers.getSigners()
+    const contract = await deployContract();
+    await expect(contract.grantRole(DEFAULT_ADMIN_ROLE, admin2.address))
+      .to.emit(contract, 'RoleGranted')
+      .withArgs(DEFAULT_ADMIN_ROLE, admin2.address, owner.address);
+    await expect(contract.connect(admin2).pauseBurnMyToken())
+      .to.emit(contract, 'Paused')
+      .withArgs(admin2.address);
+    await expect(contract.revokeRole(DEFAULT_ADMIN_ROLE, admin2.address))
+      .to.emit(contract, 'RoleRevoked')
+      .withArgs(DEFAULT_ADMIN_ROLE, admin2.address, owner.address);
+    await expect(contract.connect(admin2).pauseBurnMyToken()).to.eventually.be.rejectedWith(`AccessControl: account ${admin2.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
   });
 });
