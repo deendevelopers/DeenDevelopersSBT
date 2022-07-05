@@ -21,6 +21,7 @@ contract DeenDevelopersSBT is
 
     error CannotTransferSBT();
     error CannotApproveSBT();
+    error UnauthorizedCaller();
 
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -61,10 +62,6 @@ contract DeenDevelopersSBT is
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        require(
-            _exists(tokenId),
-            "ERC721URIStorage: URI set of nonexistent token"
-        );
         _tokenURIs[tokenId] = uri;
     }
 
@@ -81,10 +78,7 @@ contract DeenDevelopersSBT is
     }
 
     function burnMyToken(uint256 tokenId) external whenNotPaused {
-        require(
-            msg.sender == ownerOf(tokenId),
-            "Unauthorized: caller is not token owner"
-        );
+		if (msg.sender != ownerOf(tokenId)) revert UnauthorizedCaller();
         _burn(tokenId);
     }
 
@@ -135,11 +129,8 @@ contract DeenDevelopersSBT is
     }
 
     function switchURI(uint256 tokenId) external {
-        require(
-            msg.sender == ownerOf(tokenId) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "Unauthorized: caller is not token owner"
-        );
+		//TODO: Make sure to write a test for the following conditional
+		if (msg.sender != ownerOf(tokenId) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert UnauthorizedCaller();
         _isHttpURI[tokenId] = !_isHttpURI[tokenId];
     }
 }
