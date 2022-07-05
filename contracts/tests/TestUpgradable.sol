@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -13,7 +13,7 @@ contract TestUpgradable is
     Initializable,
     ERC721URIStorageUpgradeable,
     UUPSUpgradeable,
-    OwnableUpgradeable,
+    AccessControlUpgradeable,
     PausableUpgradeable
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -23,8 +23,20 @@ contract TestUpgradable is
     function _authorizeUpgrade(address newImplementation)
         internal
         override
-        onlyOwner
+        onlyRole(DEFAULT_ADMIN_ROLE)
     {}
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Upgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return
+            ERC721Upgradeable.supportsInterface(interfaceId) ||
+            AccessControlUpgradeable.supportsInterface(interfaceId);
+    }
 
     function burnMyToken(uint256) public pure {
         revert("this is a upgraded function with new logic");
