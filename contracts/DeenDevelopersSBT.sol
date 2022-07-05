@@ -3,15 +3,16 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 contract DeenDevelopersSBT is
     Initializable,
-    ERC721URIStorageUpgradeable,
+    ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable
@@ -21,9 +22,13 @@ contract DeenDevelopersSBT is
     error CannotTransferSBT();
     error CannotApproveSBT();
 
+    using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
+
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping(uint256 => string) private _tokenURIs;
+    mapping(uint256 => bool) private _isHttpURI;
+    string private _baseHttpURI;
 
     function initialize() external initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -41,7 +46,6 @@ contract DeenDevelopersSBT is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        virtual
         override(ERC721Upgradeable, AccessControlUpgradeable)
         returns (bool)
     {
@@ -57,14 +61,26 @@ contract DeenDevelopersSBT is
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+        require(
+            _exists(tokenId),
+            "ERC721URIStorage: URI set of nonexistent token"
+        );
+        _tokenURIs[tokenId] = uri;
     }
 
-    function burn(uint256 tokenId) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function _burn(uint256 tokenId) internal override {
+        super._burn(tokenId);
+
+        if (bytes(_tokenURIs[tokenId]).length != 0) {
+            delete _tokenURIs[tokenId];
+        }
+    }
+
+    function burn(uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _burn(tokenId);
     }
 
-    function burnMyToken(uint256 tokenId) public whenNotPaused {
+    function burnMyToken(uint256 tokenId) external whenNotPaused {
         require(
             msg.sender == ownerOf(tokenId),
             "Unauthorized: caller is not token owner"
@@ -94,5 +110,36 @@ contract DeenDevelopersSBT is
 
     function setApprovalForAll(address, bool) public pure override {
         revert CannotApproveSBT();
+    }
+
+    function updateBaseURI(string memory baseURI)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _baseHttpURI = baseURI;
+    }
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        _requireMinted(tokenId);
+
+        if (_isHttpURI[tokenId]) {
+            return string(abi.encodePacked(_baseHttpURI, tokenId.toString()));
+        }
+
+        return _tokenURIs[tokenId];
+    }
+
+    function switchURI(uint256 tokenId) external {
+        require(
+            msg.sender == ownerOf(tokenId) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Unauthorized: caller is not token owner"
+        );
+        _isHttpURI[tokenId] = !_isHttpURI[tokenId];
     }
 }
