@@ -1,5 +1,14 @@
 // SPDX-License-Identifier: MIT
 
+/*
+██████╗░███████╗███████╗███╗░░██╗██████╗░███████╗██╗░░░██╗███████╗██╗░░░░░░█████╗░██████╗░███████╗██████╗░░██████╗
+██╔══██╗██╔════╝██╔════╝████╗░██║██╔══██╗██╔════╝██║░░░██║██╔════╝██║░░░░░██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝
+██║░░██║█████╗░░█████╗░░██╔██╗██║██║░░██║█████╗░░╚██╗░██╔╝█████╗░░██║░░░░░██║░░██║██████╔╝█████╗░░██████╔╝╚█████╗░
+██║░░██║██╔══╝░░██╔══╝░░██║╚████║██║░░██║██╔══╝░░░╚████╔╝░██╔══╝░░██║░░░░░██║░░██║██╔═══╝░██╔══╝░░██╔══██╗░╚═══██╗
+██████╔╝███████╗███████╗██║░╚███║██████╔╝███████╗░░╚██╔╝░░███████╗███████╗╚█████╔╝██║░░░░░███████╗██║░░██║██████╔╝
+╚═════╝░╚══════╝╚══════╝╚═╝░░╚══╝╚═════╝░╚══════╝░░░╚═╝░░░╚══════╝╚══════╝░╚════╝░╚═╝░░░░░╚══════╝╚═╝░░╚═╝╚═════╝░
+*/
+
 pragma solidity 0.8.4;
 
 import "../infra/Dependencies.sol";
@@ -8,14 +17,13 @@ import "../domain/tokens/Readable.sol";
 import "../domain/tokens/Burnable.sol";
 import "../domain/accessRoles/AccessRoles.sol";
 
-import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 /**
  * @title Deen Developers Hackathon
  * @notice This contract is used to issue tokens for participants of
  * Deen Developer Hackathons. Tokens are SBT (Soul Bound Tokens) which
  * means that they are non-transferrable NFTs. This was decided as being
- * able to transfer your token deminishes its value of proving participation
+ * able to transfer your token diminishes its value of proving participation
  * in the Hackathon as participants can sell/transfer their token to a
  * non-participant.
  *
@@ -25,12 +33,12 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
  * request for personal information to be removed by contacting the team. All
  * token metadata without personal information are hosted on Arweave+IPFS and
  * there is no way to remove it to maintain the timelessness of the SBTs. In
- * order to give that same persistance and timelessness to SBTs with personal
+ * order to give that same persistence and timelessness to SBTs with personal
  * information a switch function has been implemented, which can be triggered
  * by users to switch the personal metadata of the token from the admin
  * controlled infrastructure to the Arweave+IPFS counterpart without personal
  * information. This ensures that in the event that admin infrastructure is
- * unavailable, holders will have a persistant and timelessness SBT. To trigger
+ * unavailable, holders will have a persistent and timelessness SBT. To trigger
  * this switch holders can call switchURI function passing the token ID, this
  * is reversable by calling the function again.
  *
@@ -49,8 +57,6 @@ contract DeenDevelopersSBT is
     Readable,
     Burnable
 {
-    using StringsUpgradeable for uint256;
-
     /**
      * @dev Initializes the contract, can only be called once. This is required
      * as contract is UUPS upgradeable and constructors do not work with
