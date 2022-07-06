@@ -23,6 +23,11 @@ contract Dependencies is
         onlyRole(DEFAULT_ADMIN_ROLE)
     {}
 
+    /**
+     * @dev This function is used by all external transfer functions
+     * implemented by ERC721Upgradeable. Therefore to disable transferability
+     * this function has been overriden and disabled
+     */
     function _transfer(
         address,
         address,
@@ -31,8 +36,9 @@ contract Dependencies is
         revert CannotTransferSBT();
     }
 
-    // The following functions are overrides required by Solidity.
-
+    /**
+     * @dev The following functions are overrides required by Solidity.
+     */
     function supportsInterface(bytes4 interfaceId)
         public
         view
