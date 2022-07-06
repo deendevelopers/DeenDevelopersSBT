@@ -40,7 +40,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
  * IPFS extension exists on Arweave nodes to pin files tagged with IPFS-Add onto
  * IPFS. In the event that files get untagged, they can be found by querying IPFS-Add
  * tag on Arweave with the CID value. The file can then be recovered and re-pinned to
- * IPFS.
+ * IPFS. For any security issues or vulnerabilities please contact security@deendevelopers.com
  */
 contract DeenDevelopersSBT is
     Dependencies,
