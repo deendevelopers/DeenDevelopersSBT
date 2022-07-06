@@ -7,7 +7,7 @@ require('hardhat-watcher');
 require('dotenv').config()
 
 module.exports = {
-  solidity: "0.8.10",
+  solidity: "0.8.4",
   gasReporter: {
     currency: 'ETH',
     enabled: (process.env.REPORT_GAS) ? true : false
@@ -19,6 +19,10 @@ module.exports = {
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.RINKEBY_ALCH_API_KEY}`,
+      accounts: [`${process.env.ETH_ACC_PRIV_KEY}`]
+    },
+    polygon_mainnet: {
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.POLYGON_ALCH_API_KEY}`,
       accounts: [`${process.env.ETH_ACC_PRIV_KEY}`]
     }
   },
