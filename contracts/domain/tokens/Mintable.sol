@@ -12,7 +12,7 @@ contract Mintable is Dependencies, TokenVars {
     function _safeMint(address to, string memory uri) internal {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
-        ERC721Upgradeable._safeMint(to, tokenId);
         _tokenURIs[tokenId] = uri;
+        ERC721Upgradeable._safeMint(to, tokenId);
     }
 }
