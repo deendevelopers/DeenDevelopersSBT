@@ -360,7 +360,7 @@ describe("DeenDevelopersSBT", function () {
       .withArgs('', 'http://newuri.com/');
     await expect(contract.connect(wallet1).updateBaseURI('http://failed.com/')).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
   });
-  it("token owner can switch URI", async function () {
+  it("token owner and admin can switch URI", async function () {
     const [admin, tokenOwner, tokenOwner2] = await ethers.getSigners()
     const contract = await deployContract();
     await contract.updateBaseURI('http://newuri.com/');
@@ -379,5 +379,9 @@ describe("DeenDevelopersSBT", function () {
     await expect(contract.tokenURI(2)).to.eventually.be.equal('ipfs://someuri2');
     await contract.connect(tokenOwner2).switchURI(2);
     await expect(contract.tokenURI(2)).to.eventually.be.equal('http://newuri.com/2');
+    await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
+    await contract.connect(admin).switchURI(0);
+    await expect(contract.tokenURI(0)).to.eventually.be.equal('http://newuri.com/0');
+    await contract.connect(admin).switchURI(0);
   });
 });
