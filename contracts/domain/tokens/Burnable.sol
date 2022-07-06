@@ -14,8 +14,8 @@ contract Burnable is Dependencies, TokenVars {
         }
     }
 
-    function _burnMyToken(uint256 tokenId) internal {
+    modifier onlyTokenHolder(uint256 tokenId) {
         if (msg.sender != ownerOf(tokenId)) revert UnauthorizedCaller();
-        _burnToken(tokenId);
+        _;
     }
 }

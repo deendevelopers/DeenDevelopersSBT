@@ -66,8 +66,12 @@ contract DeenDevelopersSBT is
         Burnable._burnToken(tokenId);
     }
 
-    function burnMyToken(uint256 tokenId) external whenNotPaused {
-        Burnable._burnMyToken(tokenId);
+    function burnMyToken(uint256 tokenId)
+        external
+        whenNotPaused
+        onlyTokenHolder(tokenId)
+    {
+        Burnable._burnToken(tokenId);
     }
 
     function pauseBurnMyToken() external onlyRole(DEFAULT_ADMIN_ROLE) {
