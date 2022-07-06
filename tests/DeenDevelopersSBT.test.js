@@ -352,4 +352,32 @@ describe("DeenDevelopersSBT", function () {
       .withArgs(DEFAULT_ADMIN_ROLE, admin2.address, owner.address);
     await expect(contract.connect(admin2).pauseBurnMyToken()).to.eventually.be.rejectedWith(`AccessControl: account ${admin2.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
   });
+  it("update the baseURI only admin", async function () {
+    const [owner, wallet1] = await ethers.getSigners()
+    const contract = await deployContract();
+    await expect(contract.updateBaseURI('http://newuri.com/'))
+      .to.emit(contract, 'UpdatedBaseURI')
+      .withArgs('', 'http://newuri.com/');
+    await expect(contract.connect(wallet1).updateBaseURI('http://failed.com/')).to.eventually.be.rejectedWith(`AccessControl: account ${wallet1.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`);
+  });
+  it("token owner can switch URI", async function () {
+    const [admin, tokenOwner, tokenOwner2] = await ethers.getSigners()
+    const contract = await deployContract();
+    await contract.updateBaseURI('http://newuri.com/');
+    await contract.safeMint(tokenOwner.address, 'ipfs://someuri');
+    await contract.safeMint(tokenOwner.address, 'ipfs://someuri1');
+    await contract.safeMint(tokenOwner2.address, 'ipfs://someuri2');
+    await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
+    await contract.connect(tokenOwner).switchURI(0);
+    await expect(contract.tokenURI(0)).to.eventually.be.equal('http://newuri.com/0');
+    await contract.connect(tokenOwner).switchURI(0);
+    await expect(contract.tokenURI(0)).to.eventually.be.equal('ipfs://someuri');
+    await expect(contract.tokenURI(1)).to.eventually.be.equal('ipfs://someuri1');
+    await contract.connect(tokenOwner).switchURI(1);
+    await expect(contract.tokenURI(1)).to.eventually.be.equal('http://newuri.com/1');
+    await expect(contract.connect(tokenOwner).switchURI(2)).to.eventually.be.rejectedWith(`UnauthorizedCaller()`);
+    await expect(contract.tokenURI(2)).to.eventually.be.equal('ipfs://someuri2');
+    await contract.connect(tokenOwner2).switchURI(2);
+    await expect(contract.tokenURI(2)).to.eventually.be.equal('http://newuri.com/2');
+  });
 });

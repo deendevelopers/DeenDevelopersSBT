@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -11,14 +11,16 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract TestUpgradable is
     Initializable,
-    ERC721URIStorageUpgradeable,
+    ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping(uint256 => string) private _tokenURIs;
+    mapping(uint256 => bool) private _isHttpURI;
+    string private _baseHttpURI;
+    string public newVariable;
 
     function _authorizeUpgrade(address newImplementation)
         internal

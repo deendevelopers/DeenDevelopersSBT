@@ -3,6 +3,7 @@ require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 require("hardhat-gas-reporter");
+require('hardhat-watcher');
 require('dotenv').config()
 
 module.exports = {
@@ -22,7 +23,7 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   gasReporter: {
     enabled: true,
@@ -32,5 +33,13 @@ module.exports = {
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
     // outputFile: "gas-report.txt",
     // noColors: true
-  }
+  },
+  watcher: {
+    test: {
+      tasks: [
+        { command: 'test', params: { noCompile: true, testFiles: ['tests/DeenDevelopersSBT.test.js'] } },
+      ],
+      files: ['tests/DeenDevelopersSBT.test.js']
+    },
+  },
 };

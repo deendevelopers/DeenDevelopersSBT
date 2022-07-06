@@ -31,6 +31,8 @@ contract DeenDevelopersSBT is
     mapping(uint256 => bool) private _isHttpURI;
     string private _baseHttpURI;
 
+    event UpdatedBaseURI(string oldBaseURI, string newBaseURI);
+
     function initialize() external initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
@@ -78,7 +80,7 @@ contract DeenDevelopersSBT is
     }
 
     function burnMyToken(uint256 tokenId) external whenNotPaused {
-		if (msg.sender != ownerOf(tokenId)) revert UnauthorizedCaller();
+        if (msg.sender != ownerOf(tokenId)) revert UnauthorizedCaller();
         _burn(tokenId);
     }
 
@@ -110,7 +112,9 @@ contract DeenDevelopersSBT is
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        string memory prevURI = _baseHttpURI;
         _baseHttpURI = baseURI;
+        emit UpdatedBaseURI(prevURI, _baseHttpURI);
     }
 
     function tokenURI(uint256 tokenId)
@@ -129,8 +133,10 @@ contract DeenDevelopersSBT is
     }
 
     function switchURI(uint256 tokenId) external {
-		//TODO: Make sure to write a test for the following conditional
-		if (msg.sender != ownerOf(tokenId) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert UnauthorizedCaller();
+        if (
+            msg.sender != ownerOf(tokenId) &&
+            !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) revert UnauthorizedCaller();
         _isHttpURI[tokenId] = !_isHttpURI[tokenId];
     }
 }
